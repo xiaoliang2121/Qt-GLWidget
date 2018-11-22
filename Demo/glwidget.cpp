@@ -13,6 +13,7 @@ GLWidget::GLWidget(QWidget *parent):
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
     format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    format.setDepthBufferSize(16);
     setFormat(format);
 
     setFocusPolicy(Qt::ClickFocus);
@@ -47,6 +48,7 @@ void GLWidget::initializeGL()
     initializeOpenGLFunctions();
 
     glClearColor(0.7f,0.7f,0.7f,1.0f);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void GLWidget::paintGL()
