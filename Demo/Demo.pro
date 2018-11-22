@@ -38,3 +38,7 @@ FORMS += \
 win32{
     LIBS += -lopengl32 -lglu32
 }
+
+unix{
+    LIBS += -L/usr/local/lib -lGLU
+}
