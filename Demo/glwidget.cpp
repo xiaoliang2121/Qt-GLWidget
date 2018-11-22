@@ -14,6 +14,8 @@ GLWidget::GLWidget(QWidget *parent):
     format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     setFormat(format);
+
+    setFocusPolicy(Qt::ClickFocus);
 }
 
 GLfloat GLWidget::getxRot() const
@@ -88,12 +90,6 @@ void GLWidget::resizeGL(int w, int h)
     glLoadIdentity();
 }
 
-void GLWidget::mousePressEvent(QMouseEvent *event)
-{
-    if(event->type() == QEvent::MouseButtonPress)
-        setFocus();
-    QOpenGLWidget::mousePressEvent(event);
-}
 
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
