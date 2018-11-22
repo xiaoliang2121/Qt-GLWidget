@@ -1,6 +1,7 @@
 ﻿#include "glwidget.h"
 #include <gl/GLU.h>
 #include <QKeyEvent>
+#include <QDebug>
 
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
@@ -34,6 +35,8 @@ void GLWidget::setxRot(GLfloat value)
 void GLWidget::setyRot(GLfloat value)
 {
     yRot = value;
+
+    update();
 }
 
 void GLWidget::initializeGL()
@@ -90,6 +93,7 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
+    qDebug()<<"GLWidget key press"<<endl;
     if(ev->key() == Qt::Key_Up)
         xRot -= 5.0f;
 
@@ -117,4 +121,6 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
     update();
 
     QOpenGLWidget::keyPressEvent(ev);
+
+    ev->ignore();
 }
