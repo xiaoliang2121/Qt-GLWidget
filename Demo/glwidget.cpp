@@ -1,5 +1,11 @@
 ﻿#include "glwidget.h"
+
+#ifdef WIN32
 #include <gl/GLU.h>
+#else
+#include <GL/glu.h>
+#endif
+
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QDebug>
