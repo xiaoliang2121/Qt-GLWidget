@@ -1,6 +1,7 @@
 ﻿#include "glwidget.h"
 #include <gl/GLU.h>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QDebug>
 
 GLWidget::GLWidget(QWidget *parent):
@@ -87,13 +88,15 @@ void GLWidget::resizeGL(int w, int h)
     glLoadIdentity();
 }
 
-/**
- * @brief GLWidget::keyPressEvent
- * @param ev
- */
+void GLWidget::mousePressEvent(QMouseEvent *event)
+{
+    if(event->type() == QEvent::MouseButtonPress)
+        setFocus();
+    QOpenGLWidget::mousePressEvent(event);
+}
+
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
-    qDebug()<<"GLWidget key press"<<endl;
     if(ev->key() == Qt::Key_Up)
         xRot -= 5.0f;
 
@@ -119,8 +122,5 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
         yRot = 355.0f;
 
     update();
-
     QOpenGLWidget::keyPressEvent(ev);
-
-    ev->ignore();
 }

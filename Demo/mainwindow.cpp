@@ -8,17 +8,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    qDebug()<<"MainWindow key press"<<endl;
 }
 
 void MainWindow::on_pushButton_clicked()
