@@ -51,7 +51,11 @@ void GLWidget::setyRot(GLfloat value)
 
 void GLWidget::initializeGL()
 {
-    initializeOpenGLFunctions();
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        fprintf(stderr, "GLEW Error: %s\n", glewGetErrorString(err));
+        return;
+    }
 
     // 获取OpenGL版本号和厂商信息
     const GLubyte *name = glGetString(GL_VENDOR);

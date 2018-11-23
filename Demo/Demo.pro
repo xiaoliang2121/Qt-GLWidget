@@ -21,22 +21,36 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
+BASEDIR = ..
+INCLUDEPATH += $$BASEDIR/Demo/GLTools/include
+SRC_PATH = $$BASEDIR/Demo/GLTools/
 
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    glwidget.cpp
+    glwidget.cpp \
+    $$SRC_PATH/src/math3d.cpp \
+    $$SRC_PATH/src/GLTriangleBatch.cpp \
+    $$SRC_PATH/src/GLTools.cpp \
+    $$SRC_PATH/src/GLShaderManager.cpp \
+    $$SRC_PATH/src/glew.c \
+    $$SRC_PATH/src/GLBatch.cpp
 
 HEADERS += \
         mainwindow.h \
-    glwidget.h
+    glwidget.h \
+    $$SRC_PATH/include/math3d.h \
+    $$SRC_PATH/include/GLTriangleBatch.h \
+    $$SRC_PATH/include/GLTools.h \
+    $$SRC_PATH/include/GLShaderManager.h \
+    $$SRC_PATH/include/GL/glew.h \
+    $$SRC_PATH/include/GLBatch.h
 
 FORMS += \
         mainwindow.ui
 
 win32{
-    LIBS += -lglu32
+    LIBS += -lopengl32 -lglu32
 }
 
 unix{

@@ -1,10 +1,10 @@
 ﻿#ifndef GLWIDGET_H
 #define GLWIDGET_H
 
+#include <GLTools.h>
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions_2_1>
 
-class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions_2_1
+class GLWidget : public QOpenGLWidget
 {
 public:
     GLWidget(QWidget *parent);
