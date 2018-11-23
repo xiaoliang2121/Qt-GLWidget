@@ -27,7 +27,7 @@ private:
     GLfloat xRot;
     GLfloat yRot;
 
-    GLBatch	triangleBatch;
+    GLBatch	squareBatch;
     GLShaderManager	shaderManager;
 };
 

@@ -10,6 +10,12 @@
 #include <QMouseEvent>
 #include <QDebug>
 
+GLfloat blockSize = 0.1f;
+GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
+              blockSize, -blockSize, 0.0f,
+              blockSize,  blockSize, 0.0f,
+             -blockSize,  blockSize, 0.0f};
+
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
     xRot(0.0f),
@@ -72,14 +78,9 @@ void GLWidget::initializeGL()
 
     shaderManager.InitializeStockShaders();
 
-    // Load up a triangle
-    GLfloat vVerts[] = { -0.5f, 0.0f, 0.0f,
-                          0.5f, 0.0f, 0.0f,
-                          0.0f, 0.5f, 0.0f };
-
-    triangleBatch.Begin(GL_TRIANGLES, 3);
-    triangleBatch.CopyVertexData3f(vVerts);
-    triangleBatch.End();
+    squareBatch.Begin(GL_TRIANGLE_FAN, 4);
+    squareBatch.CopyVertexData3f(vVerts);
+    squareBatch.End();
 }
 
 void GLWidget::paintGL()
@@ -89,7 +90,7 @@ void GLWidget::paintGL()
 
     GLfloat vRed[] = { 1.0f, 0.0f, 0.0f, 1.0f };
     shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed);
-    triangleBatch.Draw();
+    squareBatch.Draw();
 
     // Perform the buffer swap to display back buffer
     update();
@@ -106,29 +107,43 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
+    GLfloat stepSize = 0.025f;
+
+    GLfloat blockX = vVerts[0];   // Upper left X
+    GLfloat blockY = vVerts[7];  // Upper left Y
+
     if(ev->key() == Qt::Key_Up)
-        xRot -= 5.0f;
+        blockY += stepSize;
 
     if(ev->key() == Qt::Key_Down)
-        xRot += 5.0f;
+        blockY -= stepSize;
 
     if(ev->key() == Qt::Key_Left)
-        yRot -= 5.0f;
+        blockX -= stepSize;
 
     if(ev->key() == Qt::Key_Right)
-        yRot += 5.0f;
+        blockX += stepSize;
 
-    if(xRot > 360.0f)
-        xRot = 5.0f;
+    // Collision detection
+    if(blockX < -1.0f) blockX = -1.0f;
+    if(blockX > (1.0f - blockSize * 2)) blockX = 1.0f - blockSize * 2;;
+    if(blockY < -1.0f + blockSize * 2)  blockY = -1.0f + blockSize * 2;
+    if(blockY > 1.0f) blockY = 1.0f;
 
-    if(yRot > 360.0f)
-        yRot = 5.0f;
+    // Recalculate vertex positions
+    vVerts[0] = blockX;
+    vVerts[1] = blockY - blockSize*2;
 
-    if(xRot < 0.0f)
-        xRot = 355.0f;
+    vVerts[3] = blockX + blockSize*2;
+    vVerts[4] = blockY - blockSize*2;
 
-    if(yRot < 0.0f)
-        yRot = 355.0f;
+    vVerts[6] = blockX + blockSize*2;
+    vVerts[7] = blockY;
+
+    vVerts[9] = blockX;
+    vVerts[10] = blockY;
+
+    squareBatch.CopyVertexData3f(vVerts);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
