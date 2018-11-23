@@ -1055,7 +1055,7 @@ GLbyte* gltReadBMPBits(const char *szFileName, int *nWidth, int *nHeight)
 		{
 		free(pBitmapInfo);
 		fclose(pFile);
-		return false;
+        return NULL;
 		}
 
 	// Save the size and dimensions of the bitmap
@@ -1067,7 +1067,7 @@ GLbyte* gltReadBMPBits(const char *szFileName, int *nWidth, int *nHeight)
 	if(pBitmapInfo->header.bits != 24)
 		{
 		free(pBitmapInfo);
-		return false;
+        return NULL;
 		}
 
 	if(lBitSize == 0)
