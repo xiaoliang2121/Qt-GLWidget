@@ -26,17 +26,28 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    glwidget.cpp
+    glwidget.cpp \
+    gltools.cpp \
+    math3d.cpp \
+    glbatch.cpp \
+    glshadermanager.cpp \
+    gltrianglebatch.cpp
+
 
 HEADERS += \
         mainwindow.h \
-    glwidget.h
+    glwidget.h \
+    gltools.h \
+    math3d.h \
+    glbatch.h \
+    glshadermanager.h \
+    gltrianglebatch.h
 
 FORMS += \
         mainwindow.ui
 
 win32{
-    LIBS += -lopengl32 -lglu32
+    LIBS += -lglu32
 }
 
 unix{
