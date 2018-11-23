@@ -4,6 +4,8 @@
 #include <GLTools.h>
 #include <QOpenGLWidget>
 
+#include "GLShaderManager.h"
+
 class GLWidget : public QOpenGLWidget
 {
 public:
@@ -24,6 +26,9 @@ protected:
 private:
     GLfloat xRot;
     GLfloat yRot;
+
+    GLBatch	triangleBatch;
+    GLShaderManager	shaderManager;
 };
 
 #endif // GLWIDGET_H

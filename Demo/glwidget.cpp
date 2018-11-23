@@ -69,48 +69,35 @@ void GLWidget::initializeGL()
     printf("GLU工具库版本：%s\n",gluVersion);
 
     glClearColor(0.7f,0.7f,0.7f,1.0f);
-    glEnable(GL_DEPTH_TEST);
+
+    shaderManager.InitializeStockShaders();
+
+    // Load up a triangle
+    GLfloat vVerts[] = { -0.5f, 0.0f, 0.0f,
+                          0.5f, 0.0f, 0.0f,
+                          0.0f, 0.5f, 0.0f };
+
+    triangleBatch.Begin(GL_TRIANGLES, 3);
+    triangleBatch.CopyVertexData3f(vVerts);
+    triangleBatch.End();
 }
 
 void GLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    // Clear the window with current clearing color
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glPushMatrix();
-        glTranslatef(0.0f,0.0f,-3.0f);
-        glRotatef(xRot,1.0f,0.0f,0.0f);
-        glRotatef(yRot,0.0f,1.0f,0.0f);
+    GLfloat vRed[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed);
+    triangleBatch.Draw();
 
-        glBegin(GL_TRIANGLES);
-            glColor3f(1.0f,0.0f,0.0f);
-            glVertex3f(0.0f,0.75f,0.0f);
-
-            glColor3f(0.0f,1.0f,0.0f);
-            glVertex3f(-0.5f,0.0f,0.0f);
-
-            glColor3f(0.0f,0.0f,1.0f);
-            glVertex3f(0.5f,0.0f,0.0f);
-        glEnd();
-    glPopMatrix();
+    // Perform the buffer swap to display back buffer
+    update();
 }
 
 void GLWidget::resizeGL(int w, int h)
 {
-    GLdouble fAspect;
-
-    if(h == 0)
-        h = 1;
-
     glViewport(0,0,w,h);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    fAspect = (GLdouble)w/(GLdouble)h;
-    gluPerspective(35.0,fAspect,1.0,65.0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
 }
 
 /**
