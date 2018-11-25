@@ -8,6 +8,7 @@
 
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QOpenGLContext>
 #include <QDebug>
 
 GLfloat blockSize = 0.1f;
@@ -93,9 +94,16 @@ void GLWidget::paintGL()
     shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed);
     squareBatch.Draw();
 
+//    QOpenGLContext *pContext = QOpenGLContext::currentContext();
+//    pContext->swapBuffers(pContext->surface());
+
+    BounceFunction();
+
     // Perform the buffer swap to display back buffer
     update();
 }
+
+
 
 void GLWidget::resizeGL(int w, int h)
 {
@@ -148,4 +156,39 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
+}
+
+void GLWidget::BounceFunction()
+{
+    static GLfloat xDir = 1.0f;
+    static GLfloat yDir = 1.0f;
+
+    GLfloat stepSize = 0.005f;
+
+    GLfloat blockX = vVerts[0];   // Upper left X
+    GLfloat blockY = vVerts[7];  // Upper left Y
+
+    blockY += stepSize * yDir;
+    blockX += stepSize * xDir;
+
+    // Collision detection
+    if(blockX < -1.0f) { blockX = -1.0f; xDir *= -1.0f; }
+    if(blockX > (1.0f - blockSize * 2)) { blockX = 1.0f - blockSize * 2; xDir *= -1.0f; }
+    if(blockY < -1.0f + blockSize * 2)  { blockY = -1.0f + blockSize * 2; yDir *= -1.0f; }
+    if(blockY > 1.0f) { blockY = 1.0f; yDir *= -1.0f; }
+
+    // Recalculate vertex positions
+    vVerts[0] = blockX;
+    vVerts[1] = blockY - blockSize*2;
+
+    vVerts[3] = blockX + blockSize*2;
+    vVerts[4] = blockY - blockSize*2;
+
+    vVerts[6] = blockX + blockSize*2;
+    vVerts[7] = blockY;
+
+    vVerts[9] = blockX;
+    vVerts[10] = blockY;
+
+    squareBatch.CopyVertexData3f(vVerts);
 }

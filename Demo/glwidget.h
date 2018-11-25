@@ -24,6 +24,8 @@ protected:
     virtual void keyPressEvent(QKeyEvent *ev);
 
 private:
+    void BounceFunction(void);
+
     GLfloat xRot;
     GLfloat yRot;
 
