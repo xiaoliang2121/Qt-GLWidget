@@ -23,8 +23,8 @@ GLWidget::GLWidget(QWidget *parent):
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
     format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-//    format.setDepthBufferSize(16);
-//    format.setStencilBufferSize(8);
+    format.setDepthBufferSize(16);
+    format.setStencilBufferSize(8);
     setFormat(format);
 
     setFocusPolicy(Qt::ClickFocus);
