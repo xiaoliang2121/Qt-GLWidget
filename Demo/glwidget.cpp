@@ -57,6 +57,7 @@ void GLWidget::initializeGL()
         return;
     }
 
+    printf("Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
     // 获取OpenGL版本号和厂商信息
     const GLubyte *name = glGetString(GL_VENDOR);
     const GLubyte *label = glGetString(GL_RENDERER);
