@@ -8,11 +8,10 @@
 
 #include <QKeyEvent>
 #include <QMouseEvent>
-#include <QOpenGLContext>
 #include <QDebug>
 
-GLfloat blockSize = 0.1f;
-GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
+static GLfloat blockSize = 0.1f;
+static GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
               blockSize, -blockSize, 0.0f,
               blockSize,  blockSize, 0.0f,
              -blockSize,  blockSize, 0.0f};
@@ -93,9 +92,6 @@ void GLWidget::paintGL()
     GLfloat vRed[] = { 1.0f, 0.0f, 0.0f, 1.0f };
     shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed);
     squareBatch.Draw();
-
-//    QOpenGLContext *pContext = QOpenGLContext::currentContext();
-//    pContext->swapBuffers(pContext->surface());
 
     BounceFunction();
 
