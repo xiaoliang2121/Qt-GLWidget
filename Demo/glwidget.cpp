@@ -13,13 +13,16 @@
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
     xRot(0.0f),
-    yRot(0.0f)
+    yRot(0.0f),
+    iCull(0),
+    iDepth(0)
 {
     QSurfaceFormat format;
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
     format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     format.setDepthBufferSize(16);
+    format.setStencilBufferSize(8);
     setFormat(format);
 
     setFocusPolicy(Qt::ClickFocus);
@@ -69,30 +72,40 @@ void GLWidget::initializeGL()
     printf("OpenGL实现的版本号：%s\n",glVersion);
     printf("GLU工具库版本：%s\n",gluVersion);
 
-    glClearColor(0.7f,0.7f,0.7f,1.0f);
-    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+
+    shaderManager.InitializeStockShaders();
+    viewFrame.MoveForward(7.0f);
+
+    gltMakeTorus(torusBatch,1.0f,0.3f,52,26);
+
+    glPointSize(4.0f);
 }
 
 void GLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glPushMatrix();
-        glTranslatef(0.0f,0.0f,-3.0f);
-        glRotatef(xRot,1.0f,0.0f,0.0f);
-        glRotatef(yRot,0.0f,1.0f,0.0f);
+    if(iCull)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
 
-        glBegin(GL_TRIANGLES);
-            glColor3f(1.0f,0.0f,0.0f);
-            glVertex3f(0.0f,0.75f,0.0f);
+    if(iDepth)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
 
-            glColor3f(0.0f,1.0f,0.0f);
-            glVertex3f(-0.5f,0.0f,0.0f);
+    modelViewMatix.PushMatrix(viewFrame);
+        GLfloat vRed[] = {1.0f,0.0f,0.0f,1.0f};
 
-            glColor3f(0.0f,0.0f,1.0f);
-            glVertex3f(0.5f,0.0f,0.0f);
-        glEnd();
-    glPopMatrix();
+//        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
+//                                     vRed);
+        shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT,transformPipeline.GetModelViewMatrix(),
+                                     transformPipeline.GetProjectionMatrix(),vRed);
+
+        torusBatch.Draw();
+    modelViewMatix.PopMatrix();
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -104,14 +117,19 @@ void GLWidget::resizeGL(int w, int h)
 
     glViewport(0,0,w,h);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
 
     fAspect = (GLdouble)w/(GLdouble)h;
-    gluPerspective(35.0,fAspect,1.0,65.0);
+//    gluPerspective(35.0,fAspect,1.0,65.0);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
+
+    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,100.0f);
+    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
+//    modelViewMatix.LoadIdentity();
+    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
 }
 
 /**
@@ -121,29 +139,47 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
     if(ev->key() == Qt::Key_Up)
-        xRot -= 5.0f;
+        viewFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Down)
-        xRot += 5.0f;
+        viewFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Left)
-        yRot -= 5.0f;
+        viewFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Right)
-        yRot += 5.0f;
-
-    if(xRot > 360.0f)
-        xRot = 5.0f;
-
-    if(yRot > 360.0f)
-        yRot = 5.0f;
-
-    if(xRot < 0.0f)
-        xRot = 355.0f;
-
-    if(yRot < 0.0f)
-        yRot = 355.0f;
+        viewFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
+}
+
+void GLWidget::ProcessMenu(int value)
+{
+    makeCurrent();
+    switch(value)
+    {
+    case 1:
+        iDepth = !iDepth;
+        break;
+
+    case 2:
+        iCull = !iCull;
+        break;
+
+    case 3:
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        break;
+
+    case 4:
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        break;
+
+    case 5:
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+        break;
+    }
+    doneCurrent();
+
+    update();
 }

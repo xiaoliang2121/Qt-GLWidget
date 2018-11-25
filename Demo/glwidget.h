@@ -3,6 +3,10 @@
 
 #include <GLTools.h>
 #include <QOpenGLWidget>
+#include <GLFrame.h>
+#include <GLFrustum.h>
+#include <GLMatrixStack.h>
+#include <GLGeometryTransform.h>
 
 class GLWidget : public QOpenGLWidget
 {
@@ -21,9 +25,24 @@ protected:
 
     virtual void keyPressEvent(QKeyEvent *ev);
 
+public slots:
+    void ProcessMenu(int value);
+
 private:
     GLfloat xRot;
     GLfloat yRot;
+
+    GLFrame             viewFrame;
+    GLFrustum           viewFrustum;
+    GLTriangleBatch     torusBatch;
+    GLMatrixStack       modelViewMatix;
+    GLMatrixStack       projectionMatrix;
+    GLGeometryTransform transformPipeline;
+    GLShaderManager     shaderManager;
+
+    // Flags for effects
+    int iCull;
+    int iDepth;
 };
 
 #endif // GLWIDGET_H

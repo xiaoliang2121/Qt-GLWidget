@@ -8,6 +8,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    connect(this,&MainWindow::menuVal,ui->widget,&GLWidget::ProcessMenu);
 }
 
 MainWindow::~MainWindow()
@@ -37,4 +39,29 @@ void MainWindow::on_pushButton_2_clicked()
         yRot = 5.0f;
 
     ui->widget->setyRot(yRot);
+}
+
+void MainWindow::on_actionToggle_depth_test_triggered()
+{
+    emit menuVal(1);
+}
+
+void MainWindow::on_actionToggle_cull_backface_triggered()
+{
+    emit menuVal(2);
+}
+
+void MainWindow::on_actionSet_Fill_Mode_triggered()
+{
+    emit menuVal(3);
+}
+
+void MainWindow::on_actionSet_Line_Mode_triggered()
+{
+    emit menuVal(4);
+}
+
+void MainWindow::on_actionSet_Point_Mode_triggered()
+{
+    emit menuVal(5);
 }
