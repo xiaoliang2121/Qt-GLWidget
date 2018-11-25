@@ -10,8 +10,8 @@
 #include <QMouseEvent>
 #include <QDebug>
 
-GLfloat blockSize = 0.1f;
-GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
+static GLfloat blockSize = 0.1f;
+static GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
               blockSize, -blockSize, 0.0f,
               blockSize,  blockSize, 0.0f,
              -blockSize,  blockSize, 0.0f};
