@@ -18,6 +18,8 @@ public:
     void setxRot(GLfloat value);
     void setyRot(GLfloat value);
 
+    void SetupRC();
+
 protected:
     virtual void initializeGL();
     virtual void paintGL();

@@ -52,6 +52,22 @@ void GLWidget::setyRot(GLfloat value)
     update();
 }
 
+/**
+ * @brief GLWidget::SetupRC
+ * This function does any needed initialization on the rendering context
+ */
+void GLWidget::SetupRC()
+{
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+
+    shaderManager.InitializeStockShaders();
+    viewFrame.MoveForward(7.0f);
+
+    gltMakeTorus(torusBatch,1.0f,0.3f,52,26);
+
+    glPointSize(4.0f);
+}
+
 void GLWidget::initializeGL()
 {
     GLenum err = glewInit();
@@ -72,14 +88,7 @@ void GLWidget::initializeGL()
     printf("OpenGL实现的版本号：%s\n",glVersion);
     printf("GLU工具库版本：%s\n",gluVersion);
 
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-
-    shaderManager.InitializeStockShaders();
-    viewFrame.MoveForward(7.0f);
-
-    gltMakeTorus(torusBatch,1.0f,0.3f,52,26);
-
-    glPointSize(4.0f);
+    SetupRC();
 }
 
 void GLWidget::paintGL()
