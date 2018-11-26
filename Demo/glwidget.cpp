@@ -10,9 +10,6 @@
 #include <QMouseEvent>
 #include <QDebug>
 
-GLfloat vGreen[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-GLfloat vBlack[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
     xRot(0.0f),
@@ -66,25 +63,11 @@ void GLWidget::SetupRC()
     shaderManager.InitializeStockShaders();
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
-    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
-
-    cameraFrame.MoveForward(-15.0f);
-
-    // Sphere
-    gltMakeSphere(sphereBatch, 3.0, 10, 20);
-
-    // Torus
-    gltMakeTorus(torusBatch, 3.0f, 0.75f, 15, 15);
-
-    // Cylinder
-    gltMakeCylinder(cylinderBatch, 2.0f, 2.0f, 3.0f, 13, 2);
-
-    // Cone
-    gltMakeCylinder(coneBatch, 2.0f, 0.0f, 3.0f, 13, 2);
-
-    // Disk
-    gltMakeDisk(diskBatch, 1.5f, 3.0f, 13, 3);
+    gltMakeTorus(torusBatch,0.4f,0.15f,30,30);
+    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
 }
 
@@ -113,37 +96,23 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    modelViewMatix.PushMatrix();
-        M3DMatrix44f mCamera;
-        cameraFrame.GetCameraMatrix(mCamera);
-        modelViewMatix.MultMatrix(mCamera);
+    yRot = rotTimer.GetElapsedSeconds()*60.0f;
 
-        M3DMatrix44f mObjectFrame;
-        objectFrame.GetMatrix(mObjectFrame);
-        modelViewMatix.MultMatrix(mObjectFrame);
+    M3DMatrix44f mTranslate, mRotate, mModelView, mModelViewProjection;
 
-        switch (nStep) {
-        case 0:
-            DrawWireFramedBatch(&sphereBatch);
-            break;
-        case 1:
-            DrawWireFramedBatch(&torusBatch);
-            break;
-        case 2:
-            DrawWireFramedBatch(&cylinderBatch);
-            break;
-        case 3:
-            DrawWireFramedBatch(&coneBatch);
-            break;
-        case 4:
-            DrawWireFramedBatch(&diskBatch);
-            break;
-        default:
-            break;
-        }
-    modelViewMatix.PopMatrix();
+    m3dTranslationMatrix44(mTranslate,0.0f,0.0f,-2.5f);
+    m3dRotationMatrix44(mRotate,m3dDegToRad(yRot),0.0f,1.0f,0.0f);
+    m3dMatrixMultiply44(mModelView,mTranslate,mRotate);
+    m3dMatrixMultiply44(mModelViewProjection,viewFrustum.GetProjectionMatrix(),
+                        mModelView);
+
+    GLfloat vBlack[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    shaderManager.UseStockShader(GLT_SHADER_FLAT,mModelViewProjection,vBlack);
+    torusBatch.Draw();
+
+    update();
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -157,9 +126,7 @@ void GLWidget::resizeGL(int w, int h)
 
     fAspect = (GLdouble)w/(GLdouble)h;
 
-    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,500.0f);
-    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
-    modelViewMatix.LoadIdentity();
+    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,1000.0f);
 }
 
 /**
@@ -168,47 +135,47 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
-    if(ev->key() == Qt::Key_Up)
-        objectFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Up)
+//        objectFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Down)
-        objectFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Down)
+//        objectFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Left)
-        objectFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Left)
+//        objectFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Right)
-        objectFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Right)
+//        objectFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Space)
-    {
-        nStep++;
+//    if(ev->key() == Qt::Key_Space)
+//    {
+//        nStep++;
 
-        if(nStep > 4)
-            nStep = 0;
-    }
+//        if(nStep > 4)
+//            nStep = 0;
+//    }
 
-    QString str;
-    switch(nStep)
-    {
-    case 0:
-        str = QString("Sphere");
-        break;
-    case 1:
-        str = QString("Torus");
-        break;
-    case 2:
-        str = QString("Cylinder");
-        break;
-    case 3:
-        str = QString("Cone");
-        break;
-    case 4:
-        str = QString("Disk");
-        break;
-    }
+//    QString str;
+//    switch(nStep)
+//    {
+//    case 0:
+//        str = QString("Sphere");
+//        break;
+//    case 1:
+//        str = QString("Torus");
+//        break;
+//    case 2:
+//        str = QString("Cylinder");
+//        break;
+//    case 3:
+//        str = QString("Cone");
+//        break;
+//    case 4:
+//        str = QString("Disk");
+//        break;
+//    }
 
-    emit changeTitle(str);
+//    emit changeTitle(str);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
@@ -222,7 +189,7 @@ void GLWidget::ProcessMenu(int value)
 
     update();
 }
-
+/*
 void GLWidget::DrawWireFramedBatch(GLTriangleBatch *pBatch)
 {
     shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipeline.GetModelViewProjectionMatrix(), vGreen);
@@ -246,3 +213,4 @@ void GLWidget::DrawWireFramedBatch(GLTriangleBatch *pBatch)
     glDisable(GL_BLEND);
     glDisable(GL_LINE_SMOOTH);
 }
+*/
