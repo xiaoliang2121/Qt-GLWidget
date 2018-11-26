@@ -135,19 +135,32 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    // Clear the window with current clearing color
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glClearColor(1.0f,0.0f,0.0f,0.0f);
-    glScissor(50,50,300,200);
-    glEnable(GL_SCISSOR_TEST);
-    glClear(GL_COLOR_BUFFER_BIT);
+    GLfloat vRed[] = { 1.0f, 0.0f, 0.0f, 0.5f };
+    GLfloat vGreen[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+    GLfloat vBlue[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+    GLfloat vBlack[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-    glClearColor(0.0f,1.0f,0.0f,0.0f);
-    glScissor(100,100,200,100);
-    glClear(GL_COLOR_BUFFER_BIT);
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vGreen);
+    greenBatch.Draw();
 
-    glDisable(GL_SCISSOR_TEST);
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vRed);
+    redBatch.Draw();
+
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vBlue);
+    blueBatch.Draw();
+
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vBlack);
+    blackBatch.Draw();
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vRed);
+    squareBatch.Draw();
+    glDisable(GL_BLEND);
+
 }
 
 void GLWidget::resizeGL(int w, int h)
