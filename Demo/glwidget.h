@@ -8,6 +8,14 @@
 #include <GLMatrixStack.h>
 #include <GLGeometryTransform.h>
 
+// Array of small stars
+#define SMALL_STARS     100
+#define MEDIUM_STARS     40
+#define LARGE_STARS      15
+
+#define SCREEN_X        400
+#define SCREEN_Y        300
+
 class GLWidget : public QOpenGLWidget
 {
 public:
@@ -34,13 +42,14 @@ private:
     GLfloat xRot;
     GLfloat yRot;
 
-    GLBatch	squareBatch;
-    GLBatch greenBatch;
-    GLBatch redBatch;
-    GLBatch blueBatch;
-    GLBatch blackBatch;
+    GLBatch smallStarBatch;
+    GLBatch mediumStarBatch;
+    GLBatch largeStarBatch;
+    GLBatch mountainRangeBatch;
+    GLBatch moonBatch;
 
     GLShaderManager shaderManager;
+    GLFrustum viewFrustum;
 };
 
 #endif // GLWIDGET_H

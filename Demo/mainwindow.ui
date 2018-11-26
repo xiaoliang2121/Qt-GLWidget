@@ -83,7 +83,7 @@
      <x>0</x>
      <y>0</y>
      <width>600</width>
-     <height>28</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -110,12 +110,12 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionToggle_depth_test">
    <property name="text">
-    <string>Toggle depth test</string>
+    <string>Antialiased Rendering</string>
    </property>
   </action>
   <action name="actionToggle_cull_backface">
    <property name="text">
-    <string>Toggle cull backface</string>
+    <string>Normal Rendering</string>
    </property>
   </action>
   <action name="actionSet_Fill_Mode">

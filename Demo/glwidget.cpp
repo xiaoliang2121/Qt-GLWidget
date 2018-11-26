@@ -10,11 +10,11 @@
 #include <QMouseEvent>
 #include <QDebug>
 
-GLfloat blockSize = 0.2f;
-GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
-                      blockSize, -blockSize, 0.0f,
-                      blockSize,  blockSize, 0.0f,
-                     -blockSize,  blockSize, 0.0f};
+//GLfloat blockSize = 0.2f;
+//GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
+//                      blockSize, -blockSize, 0.0f,
+//                      blockSize,  blockSize, 0.0f,
+//                     -blockSize,  blockSize, 0.0f};
 
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
@@ -62,52 +62,88 @@ void GLWidget::setyRot(GLfloat value)
  */
 void GLWidget::SetupRC()
 {
-    glClearColor(1.0f,1.0f,1.0f,1.0f);
+    M3DVector3f vVerts[SMALL_STARS];       // SMALL_STARS is the largest batch we are going to need
+    int i;
 
     shaderManager.InitializeStockShaders();
 
-    squareBatch.Begin(GL_TRIANGLE_FAN,4);
-    squareBatch.CopyVertexData3f(vVerts);
-    squareBatch.End();
+    // Populate star list
+    smallStarBatch.Begin(GL_POINTS, SMALL_STARS);
+        for(i = 0; i < SMALL_STARS; i++)
+        {
+            vVerts[i][0] = (GLfloat)(rand() % SCREEN_X);
+            vVerts[i][1] = (GLfloat)(rand() % (SCREEN_Y - 100)) + 100.0f;
+            vVerts[i][2] = 0.0f;
+        }
+    smallStarBatch.CopyVertexData3f(vVerts);
+    smallStarBatch.End();
 
-    GLfloat vBlock[] = { 0.25f, 0.25f, 0.0f,
-                         0.75f, 0.25f, 0.0f,
-                         0.75f, 0.75f, 0.0f,
-                         0.25f, 0.75f, 0.0f};
+    // Populate star list
+    mediumStarBatch.Begin(GL_POINTS, MEDIUM_STARS);
+    for(i = 0; i < MEDIUM_STARS; i++)
+        {
+        vVerts[i][0] = (GLfloat)(rand() % SCREEN_X);
+        vVerts[i][1] = (GLfloat)(rand() % (SCREEN_Y - 100)) + 100.0f;
+        vVerts[i][2] = 0.0f;
+        }
+    mediumStarBatch.CopyVertexData3f(vVerts);
+    mediumStarBatch.End();
 
-    greenBatch.Begin(GL_TRIANGLE_FAN, 4);
-    greenBatch.CopyVertexData3f(vBlock);
-    greenBatch.End();
+    // Populate star list
+    largeStarBatch.Begin(GL_POINTS, LARGE_STARS);
+    for(i = 0; i < LARGE_STARS; i++)
+        {
+        vVerts[i][0] = (GLfloat)(rand() % SCREEN_X);
+        vVerts[i][1] = (GLfloat)(rand() % (SCREEN_Y - 100)) + 100.0f;
+        vVerts[i][2] = 0.0f;
+        }
+    largeStarBatch.CopyVertexData3f(vVerts);
+    largeStarBatch.End();
 
+    M3DVector3f vMountains[12] = { 0.0f, 25.0f, 0.0f,
+                                 50.0f, 100.0f, 0.0f,
+                                 100.0f, 25.0f, 0.0f,
+                                225.0f, 125.0f, 0.0f,
+                                300.0f, 50.0f, 0.0f,
+                                375.0f, 100.0f, 0.0f,
+                                460.0f, 25.0f, 0.0f,
+                                525.0f, 100.0f, 0.0f,
+                                600.0f, 20.0f, 0.0f,
+                                675.0f, 70.0f, 0.0f,
+                                750.0f, 25.0f, 0.0f,
+                                800.0f, 90.0f, 0.0f };
 
-    GLfloat vBlock2[] = { -0.75f, 0.25f, 0.0f,
-                          -0.25f, 0.25f, 0.0f,
-                          -0.25f, 0.75f, 0.0f,
-                          -0.75f, 0.75f, 0.0f};
+    mountainRangeBatch.Begin(GL_LINE_STRIP, 12);
+    mountainRangeBatch.CopyVertexData3f(vMountains);
+    mountainRangeBatch.End();
 
-    redBatch.Begin(GL_TRIANGLE_FAN, 4);
-    redBatch.CopyVertexData3f(vBlock2);
-    redBatch.End();
+    // The Moon
+    GLfloat x = 350.0f;     // Location and radius of moon
+    GLfloat y = 250.0f;
+    GLfloat r = 25.0f;
+    GLfloat angle = 0.0f;   // Another looping variable
 
+    moonBatch.Begin(GL_TRIANGLE_FAN, 34);
+    int nVerts = 0;
+    vVerts[nVerts][0] = x;
+    vVerts[nVerts][1] = y;
+    vVerts[nVerts][2] = 0.0f;
+        for(angle = 0; angle < 2.0f * 3.141592f; angle += 0.2f) {
+           nVerts++;
+           vVerts[nVerts][0] = x + float(cos(angle)) * r;
+           vVerts[nVerts][1] = y + float(sin(angle)) * r;
+           vVerts[nVerts][2] = 0.0f;
+           }
+    nVerts++;
 
-    GLfloat vBlock3[] = { -0.75f, -0.75f, 0.0f,
-                        -0.25f, -0.75f, 0.0f,
-                        -0.25f, -0.25f, 0.0f,
-                        -0.75f, -0.25f, 0.0f};
+    vVerts[nVerts][0] = x + r;;
+    vVerts[nVerts][1] = y;
+    vVerts[nVerts][2] = 0.0f;
+    moonBatch.CopyVertexData3f(vVerts);
+    moonBatch.End();
 
-    blueBatch.Begin(GL_TRIANGLE_FAN, 4);
-    blueBatch.CopyVertexData3f(vBlock3);
-    blueBatch.End();
-
-
-    GLfloat vBlock4[] = { 0.25f, -0.75f, 0.0f,
-                        0.75f, -0.75f, 0.0f,
-                        0.75f, -0.25f, 0.0f,
-                        0.25f, -0.25f, 0.0f};
-
-    blackBatch.Begin(GL_TRIANGLE_FAN, 4);
-    blackBatch.CopyVertexData3f(vBlock4);
-    blackBatch.End();
+    // Black background
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
 }
 
 void GLWidget::initializeGL()
@@ -135,31 +171,33 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    // Clear the window with current clearing color
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    // Clear the window
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    GLfloat vRed[] = { 1.0f, 0.0f, 0.0f, 0.5f };
-    GLfloat vGreen[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-    GLfloat vBlue[] = { 0.0f, 0.0f, 1.0f, 1.0f };
-    GLfloat vBlack[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    // Everything is white
+    GLfloat vWhite [] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    shaderManager.UseStockShader(GLT_SHADER_FLAT, viewFrustum.GetProjectionMatrix(), vWhite);
 
-    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vGreen);
-    greenBatch.Draw();
+    // Draw small stars
+    glPointSize(1.0f);
+    smallStarBatch.Draw();
 
-    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vRed);
-    redBatch.Draw();
+    // Draw medium sized stars
+    glPointSize(4.0f);
+    mediumStarBatch.Draw();
 
-    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vBlue);
-    blueBatch.Draw();
+    // Draw largest stars
+    glPointSize(8.0f);
+    largeStarBatch.Draw();
 
-    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vBlack);
-    blackBatch.Draw();
+    // Draw the "moon"
+    moonBatch.Draw();
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    shaderManager.UseStockShader(GLT_SHADER_IDENTITY,vRed);
-    squareBatch.Draw();
-    glDisable(GL_BLEND);
+    // Draw distant horizon
+    glLineWidth(3.5);
+    mountainRangeBatch.Draw();
+
+    moonBatch.Draw();
 
 }
 
@@ -169,6 +207,7 @@ void GLWidget::resizeGL(int w, int h)
         h = 1;
 
     glViewport(0,0,w,h);
+    viewFrustum.SetOrthographic(0.0f,SCREEN_X,0.0f,SCREEN_Y,-1.0f,1.0f);
 }
 
 /**
@@ -177,43 +216,43 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
-    GLfloat stepSize = 0.025f;
+//    GLfloat stepSize = 0.025f;
 
-    GLfloat blockX = vVerts[0];   // Upper left X
-    GLfloat blockY = vVerts[7];  // Upper left Y
+//    GLfloat blockX = vVerts[0];   // Upper left X
+//    GLfloat blockY = vVerts[7];  // Upper left Y
 
-    if(ev->key() == Qt::Key_Up)
-        blockY += stepSize;
+//    if(ev->key() == Qt::Key_Up)
+//        blockY += stepSize;
 
-    if(ev->key() == Qt::Key_Down)
-        blockY -= stepSize;
+//    if(ev->key() == Qt::Key_Down)
+//        blockY -= stepSize;
 
-    if(ev->key() == Qt::Key_Left)
-        blockX -= stepSize;
+//    if(ev->key() == Qt::Key_Left)
+//        blockX -= stepSize;
 
-    if(ev->key() == Qt::Key_Right)
-        blockX += stepSize;
+//    if(ev->key() == Qt::Key_Right)
+//        blockX += stepSize;
 
-    // Collision detection
-    if(blockX < -1.0f) blockX = -1.0f;
-    if(blockX > (1.0f - blockSize * 2)) blockX = 1.0f - blockSize * 2;;
-    if(blockY < -1.0f + blockSize * 2)  blockY = -1.0f + blockSize * 2;
-    if(blockY > 1.0f) blockY = 1.0f;
+//    // Collision detection
+//    if(blockX < -1.0f) blockX = -1.0f;
+//    if(blockX > (1.0f - blockSize * 2)) blockX = 1.0f - blockSize * 2;;
+//    if(blockY < -1.0f + blockSize * 2)  blockY = -1.0f + blockSize * 2;
+//    if(blockY > 1.0f) blockY = 1.0f;
 
-    // Recalculate vertex positions
-    vVerts[0] = blockX;
-    vVerts[1] = blockY - blockSize*2;
+//    // Recalculate vertex positions
+//    vVerts[0] = blockX;
+//    vVerts[1] = blockY - blockSize*2;
 
-    vVerts[3] = blockX + blockSize*2;
-    vVerts[4] = blockY - blockSize*2;
+//    vVerts[3] = blockX + blockSize*2;
+//    vVerts[4] = blockY - blockSize*2;
 
-    vVerts[6] = blockX + blockSize*2;
-    vVerts[7] = blockY;
+//    vVerts[6] = blockX + blockSize*2;
+//    vVerts[7] = blockY;
 
-    vVerts[9] = blockX;
-    vVerts[10] = blockY;
+//    vVerts[9] = blockX;
+//    vVerts[10] = blockY;
 
-    squareBatch.CopyVertexData3f(vVerts);
+//    squareBatch.CopyVertexData3f(vVerts);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
@@ -222,6 +261,32 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
 void GLWidget::ProcessMenu(int value)
 {
     makeCurrent();
+
+    switch(value)
+    {
+    case 1:
+        // Turn on antialiasing, and give hint to do the best
+        // job possible.
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_BLEND);
+        glEnable(GL_POINT_SMOOTH);
+        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
+        glEnable(GL_LINE_SMOOTH);
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+        glEnable(GL_POLYGON_SMOOTH);
+        glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+        break;
+
+    case 2:
+        // Turn off blending and all smoothing
+        glDisable(GL_BLEND);
+        glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_POINT_SMOOTH);
+        break;
+
+    default:
+        break;
+    }
 
     doneCurrent();
 
