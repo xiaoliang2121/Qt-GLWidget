@@ -34,17 +34,13 @@ private:
     GLfloat xRot;
     GLfloat yRot;
 
-    GLFrame             viewFrame;
-    GLFrustum           viewFrustum;
-    GLTriangleBatch     torusBatch;
-    GLMatrixStack       modelViewMatix;
-    GLMatrixStack       projectionMatrix;
-    GLGeometryTransform transformPipeline;
-    GLShaderManager     shaderManager;
+    GLBatch	squareBatch;
+    GLBatch greenBatch;
+    GLBatch redBatch;
+    GLBatch blueBatch;
+    GLBatch blackBatch;
 
-    // Flags for effects
-    int iCull;
-    int iDepth;
+    GLShaderManager shaderManager;
 };
 
 #endif // GLWIDGET_H

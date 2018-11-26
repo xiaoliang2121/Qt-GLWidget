@@ -10,12 +10,16 @@
 #include <QMouseEvent>
 #include <QDebug>
 
+GLfloat blockSize = 0.2f;
+GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
+                      blockSize, -blockSize, 0.0f,
+                      blockSize,  blockSize, 0.0f,
+                     -blockSize,  blockSize, 0.0f};
+
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
     xRot(0.0f),
-    yRot(0.0f),
-    iCull(0),
-    iDepth(0)
+    yRot(0.0f)
 {
     QSurfaceFormat format;
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
@@ -58,14 +62,52 @@ void GLWidget::setyRot(GLfloat value)
  */
 void GLWidget::SetupRC()
 {
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+    glClearColor(1.0f,1.0f,1.0f,1.0f);
 
     shaderManager.InitializeStockShaders();
-    viewFrame.MoveForward(7.0f);
 
-    gltMakeTorus(torusBatch,1.0f,0.3f,52,26);
+    squareBatch.Begin(GL_TRIANGLE_FAN,4);
+    squareBatch.CopyVertexData3f(vVerts);
+    squareBatch.End();
 
-    glPointSize(4.0f);
+    GLfloat vBlock[] = { 0.25f, 0.25f, 0.0f,
+                         0.75f, 0.25f, 0.0f,
+                         0.75f, 0.75f, 0.0f,
+                         0.25f, 0.75f, 0.0f};
+
+    greenBatch.Begin(GL_TRIANGLE_FAN, 4);
+    greenBatch.CopyVertexData3f(vBlock);
+    greenBatch.End();
+
+
+    GLfloat vBlock2[] = { -0.75f, 0.25f, 0.0f,
+                          -0.25f, 0.25f, 0.0f,
+                          -0.25f, 0.75f, 0.0f,
+                          -0.75f, 0.75f, 0.0f};
+
+    redBatch.Begin(GL_TRIANGLE_FAN, 4);
+    redBatch.CopyVertexData3f(vBlock2);
+    redBatch.End();
+
+
+    GLfloat vBlock3[] = { -0.75f, -0.75f, 0.0f,
+                        -0.25f, -0.75f, 0.0f,
+                        -0.25f, -0.25f, 0.0f,
+                        -0.75f, -0.25f, 0.0f};
+
+    blueBatch.Begin(GL_TRIANGLE_FAN, 4);
+    blueBatch.CopyVertexData3f(vBlock3);
+    blueBatch.End();
+
+
+    GLfloat vBlock4[] = { 0.25f, -0.75f, 0.0f,
+                        0.75f, -0.75f, 0.0f,
+                        0.75f, -0.25f, 0.0f,
+                        0.25f, -0.25f, 0.0f};
+
+    blackBatch.Begin(GL_TRIANGLE_FAN, 4);
+    blackBatch.CopyVertexData3f(vBlock4);
+    blackBatch.End();
 }
 
 void GLWidget::initializeGL()
@@ -93,52 +135,27 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 1.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    if(iCull)
-        glEnable(GL_CULL_FACE);
-    else
-        glDisable(GL_CULL_FACE);
+    glClearColor(1.0f,0.0f,0.0f,0.0f);
+    glScissor(50,50,300,200);
+    glEnable(GL_SCISSOR_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    if(iDepth)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
+    glClearColor(0.0f,1.0f,0.0f,0.0f);
+    glScissor(100,100,200,100);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    modelViewMatix.PushMatrix(viewFrame);
-        GLfloat vRed[] = {1.0f,0.0f,0.0f,1.0f};
-
-//        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
-//                                     vRed);
-        shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT,transformPipeline.GetModelViewMatrix(),
-                                     transformPipeline.GetProjectionMatrix(),vRed);
-
-        torusBatch.Draw();
-    modelViewMatix.PopMatrix();
+    glDisable(GL_SCISSOR_TEST);
 }
 
 void GLWidget::resizeGL(int w, int h)
 {
-    GLdouble fAspect;
-
     if(h == 0)
         h = 1;
 
     glViewport(0,0,w,h);
-
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-
-    fAspect = (GLdouble)w/(GLdouble)h;
-//    gluPerspective(35.0,fAspect,1.0,65.0);
-
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-
-    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,100.0f);
-    projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
-//    modelViewMatix.LoadIdentity();
-    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
 }
 
 /**
@@ -147,17 +164,43 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
+    GLfloat stepSize = 0.025f;
+
+    GLfloat blockX = vVerts[0];   // Upper left X
+    GLfloat blockY = vVerts[7];  // Upper left Y
+
     if(ev->key() == Qt::Key_Up)
-        viewFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
+        blockY += stepSize;
 
     if(ev->key() == Qt::Key_Down)
-        viewFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
+        blockY -= stepSize;
 
     if(ev->key() == Qt::Key_Left)
-        viewFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
+        blockX -= stepSize;
 
     if(ev->key() == Qt::Key_Right)
-        viewFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
+        blockX += stepSize;
+
+    // Collision detection
+    if(blockX < -1.0f) blockX = -1.0f;
+    if(blockX > (1.0f - blockSize * 2)) blockX = 1.0f - blockSize * 2;;
+    if(blockY < -1.0f + blockSize * 2)  blockY = -1.0f + blockSize * 2;
+    if(blockY > 1.0f) blockY = 1.0f;
+
+    // Recalculate vertex positions
+    vVerts[0] = blockX;
+    vVerts[1] = blockY - blockSize*2;
+
+    vVerts[3] = blockX + blockSize*2;
+    vVerts[4] = blockY - blockSize*2;
+
+    vVerts[6] = blockX + blockSize*2;
+    vVerts[7] = blockY;
+
+    vVerts[9] = blockX;
+    vVerts[10] = blockY;
+
+    squareBatch.CopyVertexData3f(vVerts);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
@@ -166,28 +209,7 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
 void GLWidget::ProcessMenu(int value)
 {
     makeCurrent();
-    switch(value)
-    {
-    case 1:
-        iDepth = !iDepth;
-        break;
 
-    case 2:
-        iCull = !iCull;
-        break;
-
-    case 3:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        break;
-
-    case 4:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        break;
-
-    case 5:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        break;
-    }
     doneCurrent();
 
     update();

@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     MainWindow w;
-    w.setWindowTitle("Geometry Test Program");
+    w.setWindowTitle("Move Block with Arrow Keys to see blending");
     w.show();
 
     return a.exec();
