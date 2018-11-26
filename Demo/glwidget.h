@@ -7,6 +7,7 @@
 #include <GLFrustum.h>
 #include <GLMatrixStack.h>
 #include <GLGeometryTransform.h>
+#include <StopWatch.h>
 
 class GLWidget : public QOpenGLWidget
 {
@@ -43,21 +44,17 @@ private:
 
     int nStep;
 
-    GLFrame				cameraFrame;
-    GLFrame             objectFrame;
     GLFrustum           viewFrustum;
     GLMatrixStack       modelViewMatix;
     GLMatrixStack       projectionMatrix;
 
     GLShaderManager     shaderManager;
+    CStopWatch          rotTimer;
     GLGeometryTransform transformPipeline;
-    M3DMatrix44f        shadowMatrix;
 
-    GLTriangleBatch     sphereBatch;
+    GLBatch             floorBatch;
     GLTriangleBatch     torusBatch;
-    GLTriangleBatch     cylinderBatch;
-    GLTriangleBatch     coneBatch;
-    GLTriangleBatch     diskBatch;
+    GLTriangleBatch     sphereBatch;
 };
 
 #endif // GLWIDGET_H

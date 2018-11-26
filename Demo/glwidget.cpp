@@ -61,31 +61,27 @@ void GLWidget::setyRot(GLfloat value)
 void GLWidget::SetupRC()
 {
     // Black background
-    glClearColor(0.7f, 0.7f, 0.7f, 1.0f );
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
 
     shaderManager.InitializeStockShaders();
 
     glEnable(GL_DEPTH_TEST);
+    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
-    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
+    gltMakeTorus(torusBatch,0.4f,0.15,30,30);
 
-    cameraFrame.MoveForward(-15.0f);
+    gltMakeSphere(sphereBatch,0.1f, 26, 13);
 
-    // Sphere
-    gltMakeSphere(sphereBatch, 3.0, 10, 20);
+    floorBatch.Begin(GL_LINES,324);
+        for(GLfloat x=-20.0f; x<20.0f; x+=0.5f)
+        {
+            floorBatch.Vertex3f(x,-0.55f,20.0f);
+            floorBatch.Vertex3f(x,-0.55f,-20.0f);
 
-    // Torus
-    gltMakeTorus(torusBatch, 3.0f, 0.75f, 15, 15);
-
-    // Cylinder
-    gltMakeCylinder(cylinderBatch, 2.0f, 2.0f, 3.0f, 13, 2);
-
-    // Cone
-    gltMakeCylinder(coneBatch, 2.0f, 0.0f, 3.0f, 13, 2);
-
-    // Disk
-    gltMakeDisk(diskBatch, 1.5f, 3.0f, 13, 3);
-
+            floorBatch.Vertex3f(20.0f,-0.55f,x);
+            floorBatch.Vertex3f(-20.0f,-0.55f,x);
+        }
+    floorBatch.End();
 }
 
 void GLWidget::initializeGL()
@@ -113,37 +109,37 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    // Color values
+    static GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+    static GLfloat vTorusColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+    static GLfloat vSphereColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+    yRot = rotTimer.GetElapsedSeconds()*60.0f;
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     modelViewMatix.PushMatrix();
-        M3DMatrix44f mCamera;
-        cameraFrame.GetCameraMatrix(mCamera);
-        modelViewMatix.MultMatrix(mCamera);
+        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
+                                     vFloorColor);
+        floorBatch.Draw();
 
-        M3DMatrix44f mObjectFrame;
-        objectFrame.GetMatrix(mObjectFrame);
-        modelViewMatix.MultMatrix(mObjectFrame);
+        modelViewMatix.Translate(0.0f,0.0f,-2.5f);
 
-        switch (nStep) {
-        case 0:
-            DrawWireFramedBatch(&sphereBatch);
-            break;
-        case 1:
-            DrawWireFramedBatch(&torusBatch);
-            break;
-        case 2:
-            DrawWireFramedBatch(&cylinderBatch);
-            break;
-        case 3:
-            DrawWireFramedBatch(&coneBatch);
-            break;
-        case 4:
-            DrawWireFramedBatch(&diskBatch);
-            break;
-        default:
-            break;
-        }
+        modelViewMatix.PushMatrix();
+            modelViewMatix.Rotate(yRot,0.0f,1.0f,0.0f);
+            shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
+                                         vTorusColor);
+            torusBatch.Draw();
+        modelViewMatix.PopMatrix();
+
+        modelViewMatix.Rotate(yRot*-2.0f,0.0f,1.0f,0.0f);
+        modelViewMatix.Translate(0.8f,0.0f,0.0f);
+        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
+                                     vSphereColor);
+        sphereBatch.Draw();
     modelViewMatix.PopMatrix();
+
+    update();
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -157,9 +153,10 @@ void GLWidget::resizeGL(int w, int h)
 
     fAspect = (GLdouble)w/(GLdouble)h;
 
-    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,500.0f);
+    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,100.0f);
     projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
-    modelViewMatix.LoadIdentity();
+
+    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
 }
 
 /**
@@ -168,47 +165,47 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
-    if(ev->key() == Qt::Key_Up)
-        objectFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Up)
+//        objectFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Down)
-        objectFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Down)
+//        objectFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Left)
-        objectFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Left)
+//        objectFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Right)
-        objectFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
+//    if(ev->key() == Qt::Key_Right)
+//        objectFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
 
-    if(ev->key() == Qt::Key_Space)
-    {
-        nStep++;
+//    if(ev->key() == Qt::Key_Space)
+//    {
+//        nStep++;
 
-        if(nStep > 4)
-            nStep = 0;
-    }
+//        if(nStep > 4)
+//            nStep = 0;
+//    }
 
-    QString str;
-    switch(nStep)
-    {
-    case 0:
-        str = QString("Sphere");
-        break;
-    case 1:
-        str = QString("Torus");
-        break;
-    case 2:
-        str = QString("Cylinder");
-        break;
-    case 3:
-        str = QString("Cone");
-        break;
-    case 4:
-        str = QString("Disk");
-        break;
-    }
+//    QString str;
+//    switch(nStep)
+//    {
+//    case 0:
+//        str = QString("Sphere");
+//        break;
+//    case 1:
+//        str = QString("Torus");
+//        break;
+//    case 2:
+//        str = QString("Cylinder");
+//        break;
+//    case 3:
+//        str = QString("Cone");
+//        break;
+//    case 4:
+//        str = QString("Disk");
+//        break;
+//    }
 
-    emit changeTitle(str);
+//    emit changeTitle(str);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
@@ -222,7 +219,7 @@ void GLWidget::ProcessMenu(int value)
 
     update();
 }
-
+/*
 void GLWidget::DrawWireFramedBatch(GLTriangleBatch *pBatch)
 {
     shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipeline.GetModelViewProjectionMatrix(), vGreen);
@@ -246,3 +243,4 @@ void GLWidget::DrawWireFramedBatch(GLTriangleBatch *pBatch)
     glDisable(GL_BLEND);
     glDisable(GL_LINE_SMOOTH);
 }
+*/
