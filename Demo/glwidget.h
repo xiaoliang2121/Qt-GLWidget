@@ -44,6 +44,8 @@ private:
 
     int nStep;
 
+    GLFrame             cameraFrame;
+
     GLFrustum           viewFrustum;
     GLMatrixStack       modelViewMatix;
     GLMatrixStack       projectionMatrix;

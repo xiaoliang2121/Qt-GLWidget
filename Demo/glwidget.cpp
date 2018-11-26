@@ -119,24 +119,29 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     modelViewMatix.PushMatrix();
-        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
-                                     vFloorColor);
-        floorBatch.Draw();
+        M3DMatrix44f mCamera;
+        cameraFrame.GetCameraMatrix(mCamera);
+        modelViewMatix.PushMatrix(mCamera);
 
-        modelViewMatix.Translate(0.0f,0.0f,-2.5f);
-
-        modelViewMatix.PushMatrix();
-            modelViewMatix.Rotate(yRot,0.0f,1.0f,0.0f);
             shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
-                                         vTorusColor);
-            torusBatch.Draw();
-        modelViewMatix.PopMatrix();
+                                         vFloorColor);
+            floorBatch.Draw();
 
-        modelViewMatix.Rotate(yRot*-2.0f,0.0f,1.0f,0.0f);
-        modelViewMatix.Translate(0.8f,0.0f,0.0f);
-        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
-                                     vSphereColor);
-        sphereBatch.Draw();
+            modelViewMatix.Translate(0.0f,0.0f,-2.5f);
+
+            modelViewMatix.PushMatrix();
+                modelViewMatix.Rotate(yRot,0.0f,1.0f,0.0f);
+                shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
+                                             vTorusColor);
+                torusBatch.Draw();
+            modelViewMatix.PopMatrix();
+
+            modelViewMatix.Rotate(yRot*-2.0f,0.0f,1.0f,0.0f);
+            modelViewMatix.Translate(0.8f,0.0f,0.0f);
+            shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
+                                         vSphereColor);
+            sphereBatch.Draw();
+        modelViewMatix.PopMatrix();
     modelViewMatix.PopMatrix();
 
     update();
@@ -165,17 +170,20 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
-//    if(ev->key() == Qt::Key_Up)
-//        objectFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
+    float linear = 0.1f;
+    float angular = float(m3dDegToRad(5.0f));
 
-//    if(ev->key() == Qt::Key_Down)
-//        objectFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
+    if(ev->key() == Qt::Key_Up)
+        cameraFrame.MoveForward(linear);
 
-//    if(ev->key() == Qt::Key_Left)
-//        objectFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
+    if(ev->key() == Qt::Key_Down)
+        cameraFrame.MoveForward(-linear);
 
-//    if(ev->key() == Qt::Key_Right)
-//        objectFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
+    if(ev->key() == Qt::Key_Left)
+        cameraFrame.RotateWorld(angular, 0.0f, 1.0f, 0.0f);
+
+    if(ev->key() == Qt::Key_Right)
+        cameraFrame.RotateWorld(-angular, 0.0f, 1.0f, 0.0f);
 
 //    if(ev->key() == Qt::Key_Space)
 //    {
