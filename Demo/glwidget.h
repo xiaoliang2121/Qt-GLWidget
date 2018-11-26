@@ -10,6 +10,8 @@
 
 class GLWidget : public QOpenGLWidget
 {
+    Q_OBJECT
+
 public:
     GLWidget(QWidget *parent);
 
@@ -30,21 +32,32 @@ protected:
 public slots:
     void ProcessMenu(int value);
 
+signals:
+    void changeTitle(QString title);
+
 private:
+    void DrawWireFramedBatch(GLTriangleBatch* pBatch);
+
     GLfloat xRot;
     GLfloat yRot;
 
-    GLFrame             viewFrame;
+    int nStep;
+
+    GLFrame				cameraFrame;
+    GLFrame             objectFrame;
     GLFrustum           viewFrustum;
-    GLTriangleBatch     torusBatch;
     GLMatrixStack       modelViewMatix;
     GLMatrixStack       projectionMatrix;
-    GLGeometryTransform transformPipeline;
-    GLShaderManager     shaderManager;
 
-    // Flags for effects
-    int iCull;
-    int iDepth;
+    GLShaderManager     shaderManager;
+    GLGeometryTransform transformPipeline;
+    M3DMatrix44f        shadowMatrix;
+
+    GLTriangleBatch     sphereBatch;
+    GLTriangleBatch     torusBatch;
+    GLTriangleBatch     cylinderBatch;
+    GLTriangleBatch     coneBatch;
+    GLTriangleBatch     diskBatch;
 };
 
 #endif // GLWIDGET_H

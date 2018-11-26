@@ -9,12 +9,18 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    connect(ui->widget,&GLWidget::changeTitle,this,&MainWindow::onChangeTitle);
     connect(this,&MainWindow::menuVal,ui->widget,&GLWidget::ProcessMenu);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::onChangeTitle(QString title)
+{
+    setWindowTitle(title);
 }
 
 void MainWindow::on_pushButton_clicked()

@@ -10,12 +10,14 @@
 #include <QMouseEvent>
 #include <QDebug>
 
+GLfloat vGreen[] = { 0.0f, 1.0f, 0.0f, 1.0f };
+GLfloat vBlack[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
     xRot(0.0f),
     yRot(0.0f),
-    iCull(0),
-    iDepth(0)
+    nStep(0)
 {
     QSurfaceFormat format;
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
@@ -58,14 +60,32 @@ void GLWidget::setyRot(GLfloat value)
  */
 void GLWidget::SetupRC()
 {
-    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+    // Black background
+    glClearColor(0.7f, 0.7f, 0.7f, 1.0f );
 
     shaderManager.InitializeStockShaders();
-    viewFrame.MoveForward(7.0f);
 
-    gltMakeTorus(torusBatch,1.0f,0.3f,52,26);
+    glEnable(GL_DEPTH_TEST);
 
-    glPointSize(4.0f);
+    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
+
+    cameraFrame.MoveForward(-15.0f);
+
+    // Sphere
+    gltMakeSphere(sphereBatch, 3.0, 10, 20);
+
+    // Torus
+    gltMakeTorus(torusBatch, 3.0f, 0.75f, 15, 15);
+
+    // Cylinder
+    gltMakeCylinder(cylinderBatch, 2.0f, 2.0f, 3.0f, 13, 2);
+
+    // Cone
+    gltMakeCylinder(coneBatch, 2.0f, 0.0f, 3.0f, 13, 2);
+
+    // Disk
+    gltMakeDisk(diskBatch, 1.5f, 3.0f, 13, 3);
+
 }
 
 void GLWidget::initializeGL()
@@ -93,27 +113,36 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    if(iCull)
-        glEnable(GL_CULL_FACE);
-    else
-        glDisable(GL_CULL_FACE);
+    modelViewMatix.PushMatrix();
+        M3DMatrix44f mCamera;
+        cameraFrame.GetCameraMatrix(mCamera);
+        modelViewMatix.MultMatrix(mCamera);
 
-    if(iDepth)
-        glEnable(GL_DEPTH_TEST);
-    else
-        glDisable(GL_DEPTH_TEST);
+        M3DMatrix44f mObjectFrame;
+        objectFrame.GetMatrix(mObjectFrame);
+        modelViewMatix.MultMatrix(mObjectFrame);
 
-    modelViewMatix.PushMatrix(viewFrame);
-        GLfloat vRed[] = {1.0f,0.0f,0.0f,1.0f};
-
-//        shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
-//                                     vRed);
-        shaderManager.UseStockShader(GLT_SHADER_DEFAULT_LIGHT,transformPipeline.GetModelViewMatrix(),
-                                     transformPipeline.GetProjectionMatrix(),vRed);
-
-        torusBatch.Draw();
+        switch (nStep) {
+        case 0:
+            DrawWireFramedBatch(&sphereBatch);
+            break;
+        case 1:
+            DrawWireFramedBatch(&torusBatch);
+            break;
+        case 2:
+            DrawWireFramedBatch(&cylinderBatch);
+            break;
+        case 3:
+            DrawWireFramedBatch(&coneBatch);
+            break;
+        case 4:
+            DrawWireFramedBatch(&diskBatch);
+            break;
+        default:
+            break;
+        }
     modelViewMatix.PopMatrix();
 }
 
@@ -126,19 +155,11 @@ void GLWidget::resizeGL(int w, int h)
 
     glViewport(0,0,w,h);
 
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-
     fAspect = (GLdouble)w/(GLdouble)h;
-//    gluPerspective(35.0,fAspect,1.0,65.0);
 
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-
-    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,100.0f);
+    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,500.0f);
     projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
-//    modelViewMatix.LoadIdentity();
-    transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
+    modelViewMatix.LoadIdentity();
 }
 
 /**
@@ -148,16 +169,46 @@ void GLWidget::resizeGL(int w, int h)
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
     if(ev->key() == Qt::Key_Up)
-        viewFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
+        objectFrame.RotateWorld(m3dDegToRad(-5.0), 1.0f, 0.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Down)
-        viewFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
+        objectFrame.RotateWorld(m3dDegToRad(5.0), 1.0f, 0.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Left)
-        viewFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
+        objectFrame.RotateWorld(m3dDegToRad(-5.0), 0.0f, 1.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Right)
-        viewFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
+        objectFrame.RotateWorld(m3dDegToRad(5.0), 0.0f, 1.0f, 0.0f);
+
+    if(ev->key() == Qt::Key_Space)
+    {
+        nStep++;
+
+        if(nStep > 4)
+            nStep = 0;
+    }
+
+    QString str;
+    switch(nStep)
+    {
+    case 0:
+        str = QString("Sphere");
+        break;
+    case 1:
+        str = QString("Torus");
+        break;
+    case 2:
+        str = QString("Cylinder");
+        break;
+    case 3:
+        str = QString("Cone");
+        break;
+    case 4:
+        str = QString("Disk");
+        break;
+    }
+
+    emit changeTitle(str);
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
@@ -166,29 +217,32 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
 void GLWidget::ProcessMenu(int value)
 {
     makeCurrent();
-    switch(value)
-    {
-    case 1:
-        iDepth = !iDepth;
-        break;
 
-    case 2:
-        iCull = !iCull;
-        break;
-
-    case 3:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        break;
-
-    case 4:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        break;
-
-    case 5:
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        break;
-    }
     doneCurrent();
 
     update();
+}
+
+void GLWidget::DrawWireFramedBatch(GLTriangleBatch *pBatch)
+{
+    shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipeline.GetModelViewProjectionMatrix(), vGreen);
+    pBatch->Draw();
+
+    // Draw black outline
+    glPolygonOffset(-1.0f, -1.0f);
+    glEnable(GL_LINE_SMOOTH);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_POLYGON_OFFSET_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.5f);
+    shaderManager.UseStockShader(GLT_SHADER_FLAT, transformPipeline.GetModelViewProjectionMatrix(), vBlack);
+    pBatch->Draw();
+
+    // Restore polygon mode and depht testing
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_POLYGON_OFFSET_LINE);
+    glLineWidth(1.0f);
+    glDisable(GL_BLEND);
+    glDisable(GL_LINE_SMOOTH);
 }
