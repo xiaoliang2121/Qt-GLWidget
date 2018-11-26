@@ -16,6 +16,8 @@ public:
     void setxRot(GLfloat value);
     void setyRot(GLfloat value);
 
+    void SetupRC();
+
 protected:
     virtual void initializeGL();
     virtual void paintGL();
@@ -29,6 +31,9 @@ private:
 
     GLBatch	squareBatch;
     GLShaderManager	shaderManager;
+
+    GLfloat xPos;
+    GLfloat yPos;
 };
 
 #endif // GLWIDGET_H

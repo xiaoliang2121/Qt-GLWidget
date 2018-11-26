@@ -12,14 +12,16 @@
 
 GLfloat blockSize = 0.1f;
 GLfloat vVerts[] = { -blockSize, -blockSize, 0.0f,
-              blockSize, -blockSize, 0.0f,
-              blockSize,  blockSize, 0.0f,
-             -blockSize,  blockSize, 0.0f};
+                      blockSize, -blockSize, 0.0f,
+                      blockSize,  blockSize, 0.0f,
+                     -blockSize,  blockSize, 0.0f};
 
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent),
     xRot(0.0f),
-    yRot(0.0f)
+    yRot(0.0f),
+    xPos(0.0f),
+    yPos(0.0f)
 {
     QSurfaceFormat format;
     format.setProfile(QSurfaceFormat::CompatibilityProfile);
@@ -55,6 +57,17 @@ void GLWidget::setyRot(GLfloat value)
     update();
 }
 
+void GLWidget::SetupRC()
+{
+    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+
+    shaderManager.InitializeStockShaders();
+
+    squareBatch.Begin(GL_TRIANGLE_FAN, 4);
+    squareBatch.CopyVertexData3f(vVerts);
+    squareBatch.End();
+}
+
 void GLWidget::initializeGL()
 {
     GLenum err = glewInit();
@@ -75,13 +88,7 @@ void GLWidget::initializeGL()
     printf("OpenGL实现的版本号：%s\n",glVersion);
     printf("GLU工具库版本：%s\n",gluVersion);
 
-    glClearColor(0.7f,0.7f,0.7f,1.0f);
-
-    shaderManager.InitializeStockShaders();
-
-    squareBatch.Begin(GL_TRIANGLE_FAN, 4);
-    squareBatch.CopyVertexData3f(vVerts);
-    squareBatch.End();
+    SetupRC();
 }
 
 void GLWidget::paintGL()
@@ -90,11 +97,16 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     GLfloat vRed[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    shaderManager.UseStockShader(GLT_SHADER_IDENTITY, vRed);
-    squareBatch.Draw();
 
-    // Perform the buffer swap to display back buffer
-    update();
+    M3DMatrix44f mFinalTransform, mTranslationMatrix, mRotationMatrix;
+    m3dTranslationMatrix44(mTranslationMatrix,xPos,yPos,0.0f);
+
+    yRot += 5.0f;
+    m3dRotationMatrix44(mRotationMatrix,m3dDegToRad(yRot),0.0f,0.0f,1.0f);
+    m3dMatrixMultiply44(mFinalTransform,mTranslationMatrix,mRotationMatrix);
+
+    shaderManager.UseStockShader(GLT_SHADER_FLAT, mFinalTransform, vRed);
+    squareBatch.Draw();
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -110,41 +122,26 @@ void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
     GLfloat stepSize = 0.025f;
 
-    GLfloat blockX = vVerts[0];   // Upper left X
-    GLfloat blockY = vVerts[7];  // Upper left Y
-
     if(ev->key() == Qt::Key_Up)
-        blockY += stepSize;
+        yPos += stepSize;
 
     if(ev->key() == Qt::Key_Down)
-        blockY -= stepSize;
+        yPos -= stepSize;
 
     if(ev->key() == Qt::Key_Left)
-        blockX -= stepSize;
+        xPos -= stepSize;
 
     if(ev->key() == Qt::Key_Right)
-        blockX += stepSize;
+        xPos += stepSize;
 
     // Collision detection
-    if(blockX < -1.0f) blockX = -1.0f;
-    if(blockX > (1.0f - blockSize * 2)) blockX = 1.0f - blockSize * 2;;
-    if(blockY < -1.0f + blockSize * 2)  blockY = -1.0f + blockSize * 2;
-    if(blockY > 1.0f) blockY = 1.0f;
+    if(xPos < (-1.0f + blockSize)) xPos = -1.0f + blockSize;
 
-    // Recalculate vertex positions
-    vVerts[0] = blockX;
-    vVerts[1] = blockY - blockSize*2;
+    if(xPos > (1.0f - blockSize)) xPos = 1.0f - blockSize;
 
-    vVerts[3] = blockX + blockSize*2;
-    vVerts[4] = blockY - blockSize*2;
+    if(yPos < (-1.0f + blockSize))  yPos = -1.0f + blockSize;
 
-    vVerts[6] = blockX + blockSize*2;
-    vVerts[7] = blockY;
-
-    vVerts[9] = blockX;
-    vVerts[10] = blockY;
-
-    squareBatch.CopyVertexData3f(vVerts);
+    if(yPos > (1.0f - blockSize)) yPos = 1.0f - blockSize;
 
     update();
     QOpenGLWidget::keyPressEvent(ev);
