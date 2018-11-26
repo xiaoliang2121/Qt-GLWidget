@@ -30,6 +30,13 @@ GLWidget::GLWidget(QWidget *parent):
     setFocusPolicy(Qt::ClickFocus);
 }
 
+GLWidget::~GLWidget()
+{
+    makeCurrent();
+    glDeleteTextures(1,&textureID);
+    doneCurrent();
+}
+
 GLfloat GLWidget::getxRot() const
 {
     return xRot;
@@ -61,34 +68,19 @@ void GLWidget::setyRot(GLfloat value)
 void GLWidget::SetupRC()
 {
     // Black background
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f );
+    glClearColor(0.7f, 0.7f, 0.7f, 1.0f );
 
     shaderManager.InitializeStockShaders();
 
     glEnable(GL_DEPTH_TEST);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-    gltMakeTorus(torusBatch,0.4f,0.15,30,30);
+    glGenTextures(1,&textureID);
+    glBindTexture(GL_TEXTURE_2D,textureID);
+    LoadTGATexture("../Demo/Res/stone.tga",GL_LINEAR,GL_LINEAR,GL_CLAMP_TO_EDGE);
 
-    gltMakeSphere(sphereBatch,0.1f, 26, 13);
+    MakePyramid(pyramidBatch);
 
-    floorBatch.Begin(GL_LINES,324);
-        for(GLfloat x=-20.0f; x<20.0f; x+=0.5f)
-        {
-            floorBatch.Vertex3f(x,-0.55f,20.0f);
-            floorBatch.Vertex3f(x,-0.55f,-20.0f);
-
-            floorBatch.Vertex3f(20.0f,-0.55f,x);
-            floorBatch.Vertex3f(-20.0f,-0.55f,x);
-        }
-    floorBatch.End();
-
-    for(int i=0; i<NUM_SPHERES; i++)
-    {
-        GLfloat x = (GLfloat)((rand()%400)-200)*0.1f;
-        GLfloat z = (GLfloat)((rand()%400)-200)*0.1f;
-        spheres[i].SetOrigin(x,0.0f,z);
-    }
+    cameraFrame.MoveForward(-7.0f);
 }
 
 void GLWidget::initializeGL()
@@ -116,65 +108,27 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-    // Color values
-    static GLfloat vFloorColor[] = { 0.0f, 1.0f, 0.0f, 1.0f };
-    static GLfloat vTorusColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-    static GLfloat vSphereColor[] = { 0.0f, 0.0f, 1.0f, 1.0f };
+    static GLfloat vLightPos [] = { 1.0f, 1.0f, 0.0f };
+    static GLfloat vWhite [] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    yRot = rotTimer.GetElapsedSeconds()*60.0f;
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     modelViewMatix.PushMatrix();
         M3DMatrix44f mCamera;
         cameraFrame.GetCameraMatrix(mCamera);
-        modelViewMatix.PushMatrix(mCamera);
-        // Transform the light position into eye coordinates
-            M3DVector4f vLightPos = { 0.0f, 10.0f, 5.0f, 1.0f };
-            M3DVector4f vLightEyePos;
-            m3dTransformVector4(vLightEyePos, vLightPos, mCamera);
+        modelViewMatix.MultMatrix(mCamera);
 
-            shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
-                                         vFloorColor);
-            floorBatch.Draw();
+        M3DMatrix44f mObjectFrame;
+        objectFrame.GetMatrix(mObjectFrame);
+        modelViewMatix.MultMatrix(mObjectFrame);
 
-            for(int i=0; i<NUM_SPHERES; i++)
-            {
-                modelViewMatix.PushMatrix();
-                    modelViewMatix.MultMatrix(spheres[i]);
-                    shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
-                                                 transformPipeline.GetModelViewMatrix(),
-                                                 transformPipeline.GetProjectionMatrix(),
-                                                 vLightEyePos,
-                                                 vSphereColor);
-                    sphereBatch.Draw();
-                modelViewMatix.PopMatrix();
-            }
-
-            modelViewMatix.Translate(0.0f,0.0f,-2.5f);
-
-            modelViewMatix.PushMatrix();
-                modelViewMatix.Rotate(yRot,0.0f,1.0f,0.0f);
-                shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
-                                             transformPipeline.GetModelViewMatrix(),
-                                             transformPipeline.GetProjectionMatrix(),
-                                             vLightEyePos,
-                                             vTorusColor);
-                torusBatch.Draw();
-            modelViewMatix.PopMatrix();
-
-            modelViewMatix.Rotate(yRot*-2.0f,0.0f,1.0f,0.0f);
-            modelViewMatix.Translate(0.8f,0.0f,0.0f);
-            shaderManager.UseStockShader(GLT_SHADER_POINT_LIGHT_DIFF,
-                                         transformPipeline.GetModelViewMatrix(),
-                                         transformPipeline.GetProjectionMatrix(),
-                                         vLightEyePos,
-                                         vSphereColor);
-            sphereBatch.Draw();
-        modelViewMatix.PopMatrix();
+        glBindTexture(GL_TEXTURE_2D,textureID);
+        shaderManager.UseStockShader(GLT_SHADER_TEXTURE_POINT_LIGHT_DIFF,
+                                     transformPipeline.GetModelViewMatrix(),
+                                     transformPipeline.GetProjectionMatrix(),
+                                     vLightPos,vWhite,0);
+        pyramidBatch.Draw();
     modelViewMatix.PopMatrix();
-
-    update();
 }
 
 void GLWidget::resizeGL(int w, int h)
@@ -188,7 +142,7 @@ void GLWidget::resizeGL(int w, int h)
 
     fAspect = (GLdouble)w/(GLdouble)h;
 
-    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,100.0f);
+    viewFrustum.SetPerspective(35.0f,fAspect,1.0f,500.0f);
     projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
 
     transformPipeline.SetMatrixStacks(modelViewMatix,projectionMatrix);
@@ -200,20 +154,17 @@ void GLWidget::resizeGL(int w, int h)
  */
 void GLWidget::keyPressEvent(QKeyEvent *ev)
 {
-    float linear = 0.1f;
-    float angular = float(m3dDegToRad(5.0f));
-
     if(ev->key() == Qt::Key_Up)
-        cameraFrame.MoveForward(linear);
+        objectFrame.RotateWorld(m3dDegToRad(-5.0f),1.0f,0.0f,0.0f);
 
     if(ev->key() == Qt::Key_Down)
-        cameraFrame.MoveForward(-linear);
+        objectFrame.RotateWorld(m3dDegToRad(5.0f),1.0f,0.0f,0.0f);
 
     if(ev->key() == Qt::Key_Left)
-        cameraFrame.RotateWorld(angular, 0.0f, 1.0f, 0.0f);
+        objectFrame.RotateWorld(m3dDegToRad(-5.0f), 0.0f, 1.0f, 0.0f);
 
     if(ev->key() == Qt::Key_Right)
-        cameraFrame.RotateWorld(-angular, 0.0f, 1.0f, 0.0f);
+        objectFrame.RotateWorld(m3dDegToRad(5.0f), 0.0f, 1.0f, 0.0f);
 
 //    if(ev->key() == Qt::Key_Space)
 //    {
@@ -257,6 +208,135 @@ void GLWidget::ProcessMenu(int value)
 
     update();
 }
+
+bool GLWidget::LoadTGATexture(const char *szFileName, GLenum minFilter, GLenum magFilter, GLenum wrapMode)
+{
+    GLbyte *pBytes;
+    int nWidth, nHeight, nComponents;
+    GLenum eFormat;
+
+    pBytes = gltReadTGABits(szFileName,&nWidth,&nHeight,&nComponents,&eFormat);
+    if(pBytes == NULL)
+        return false;
+
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,wrapMode);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,wrapMode);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,minFilter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,magFilter);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+    glTexImage2D(GL_TEXTURE_2D,0,nComponents,nWidth,nHeight,0,eFormat,
+                 GL_UNSIGNED_BYTE,pBytes);
+
+    free(pBytes);
+
+    if(minFilter == GL_LINEAR_MIPMAP_LINEAR ||
+       minFilter == GL_LINEAR_MIPMAP_NEAREST ||
+       minFilter == GL_NEAREST_MIPMAP_LINEAR ||
+       minFilter == GL_NEAREST_MIPMAP_NEAREST)
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    return true;
+
+}
+
+void GLWidget::MakePyramid(GLBatch &pyramidBatch)
+{
+    pyramidBatch.Begin(GL_TRIANGLES, 18, 1);
+
+    // Bottom of pyramid
+    pyramidBatch.Normal3f(0.0f, -1.0f, 0.0f);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 0.0f);
+    pyramidBatch.Vertex3f(-1.0f, -1.0f, -1.0f);
+
+    pyramidBatch.Normal3f(0.0f, -1.0f, 0.0f);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 0.0f);
+    pyramidBatch.Vertex3f(1.0f, -1.0f, -1.0f);
+
+    pyramidBatch.Normal3f(0.0f, -1.0f, 0.0f);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 1.0f);
+    pyramidBatch.Vertex3f(1.0f, -1.0f, 1.0f);
+
+    pyramidBatch.Normal3f(0.0f, -1.0f, 0.0f);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 1.0f);
+    pyramidBatch.Vertex3f(-1.0f, -1.0f, 1.0f);
+
+    pyramidBatch.Normal3f(0.0f, -1.0f, 0.0f);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 0.0f);
+    pyramidBatch.Vertex3f(-1.0f, -1.0f, -1.0f);
+
+    pyramidBatch.Normal3f(0.0f, -1.0f, 0.0f);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 1.0f);
+    pyramidBatch.Vertex3f(1.0f, -1.0f, 1.0f);
+
+
+    M3DVector3f vApex = { 0.0f, 1.0f, 0.0f };
+    M3DVector3f vFrontLeft = { -1.0f, -1.0f, 1.0f };
+    M3DVector3f vFrontRight = { 1.0f, -1.0f, 1.0f };
+    M3DVector3f vBackLeft = { -1.0f, -1.0f, -1.0f };
+    M3DVector3f vBackRight = { 1.0f, -1.0f, -1.0f };
+    M3DVector3f n;
+
+    // Front of Pyramid
+    m3dFindNormal(n, vApex, vFrontLeft, vFrontRight);
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.5f, 1.0f);
+    pyramidBatch.Vertex3fv(vApex);		// Apex
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vFrontLeft);		// Front left corner
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vFrontRight);		// Front right corner
+
+
+    m3dFindNormal(n, vApex, vBackLeft, vFrontLeft);
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.5f, 1.0f);
+    pyramidBatch.Vertex3fv(vApex);		// Apex
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vBackLeft);		// Back left corner
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vFrontLeft);		// Front left corner
+
+    m3dFindNormal(n, vApex, vFrontRight, vBackRight);
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.5f, 1.0f);
+    pyramidBatch.Vertex3fv(vApex);				// Apex
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vFrontRight);		// Front right corner
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vBackRight);			// Back right cornder
+
+
+    m3dFindNormal(n, vApex, vBackRight, vBackLeft);
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.5f, 1.0f);
+    pyramidBatch.Vertex3fv(vApex);		// Apex
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 0.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vBackRight);		// Back right cornder
+
+    pyramidBatch.Normal3fv(n);
+    pyramidBatch.MultiTexCoord2f(0, 1.0f, 0.0f);
+    pyramidBatch.Vertex3fv(vBackLeft);		// Back left corner
+
+    pyramidBatch.End();
+}
+
+
 /*
 void GLWidget::DrawWireFramedBatch(GLTriangleBatch *pBatch)
 {

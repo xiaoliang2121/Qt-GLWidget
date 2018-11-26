@@ -9,14 +9,13 @@
 #include <GLGeometryTransform.h>
 #include <StopWatch.h>
 
-#define NUM_SPHERES 50
-
 class GLWidget : public QOpenGLWidget
 {
     Q_OBJECT
 
 public:
     GLWidget(QWidget *parent);
+    ~GLWidget();
 
     GLfloat getxRot() const;
     GLfloat getyRot() const;
@@ -40,26 +39,27 @@ signals:
 
 private:
     void DrawWireFramedBatch(GLTriangleBatch* pBatch);
+    bool LoadTGATexture(const char *szFileName, GLenum minFilter, GLenum magFilter,
+                        GLenum wrapMode);
+    void MakePyramid(GLBatch& pyramidBatch);
 
     GLfloat xRot;
     GLfloat yRot;
 
     int nStep;
 
+    GLShaderManager     shaderManager;
     GLFrame             cameraFrame;
-    GLFrame             spheres[NUM_SPHERES];
+    GLFrame             objectFrame;
 
     GLFrustum           viewFrustum;
     GLMatrixStack       modelViewMatix;
     GLMatrixStack       projectionMatrix;
-
-    GLShaderManager     shaderManager;
-    CStopWatch          rotTimer;
     GLGeometryTransform transformPipeline;
+    M3DMatrix44f        shadowMatrix;
 
-    GLBatch             floorBatch;
-    GLTriangleBatch     torusBatch;
-    GLTriangleBatch     sphereBatch;
+    GLBatch             pyramidBatch;
+    GLuint              textureID;
 };
 
 #endif // GLWIDGET_H
