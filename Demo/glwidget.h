@@ -9,6 +9,8 @@
 #include <GLGeometryTransform.h>
 #include <StopWatch.h>
 
+#define NUM_SPHERES 50
+
 class GLWidget : public QOpenGLWidget
 {
     Q_OBJECT
@@ -45,6 +47,7 @@ private:
     int nStep;
 
     GLFrame             cameraFrame;
+    GLFrame             spheres[NUM_SPHERES];
 
     GLFrustum           viewFrustum;
     GLMatrixStack       modelViewMatix;

@@ -82,6 +82,13 @@ void GLWidget::SetupRC()
             floorBatch.Vertex3f(-20.0f,-0.55f,x);
         }
     floorBatch.End();
+
+    for(int i=0; i<NUM_SPHERES; i++)
+    {
+        GLfloat x = (GLfloat)((rand()%400)-200)*0.1f;
+        GLfloat z = (GLfloat)((rand()%400)-200)*0.1f;
+        spheres[i].SetOrigin(x,0.0f,z);
+    }
 }
 
 void GLWidget::initializeGL()
@@ -126,6 +133,17 @@ void GLWidget::paintGL()
             shaderManager.UseStockShader(GLT_SHADER_FLAT,transformPipeline.GetModelViewProjectionMatrix(),
                                          vFloorColor);
             floorBatch.Draw();
+
+            for(int i=0; i<NUM_SPHERES; i++)
+            {
+                modelViewMatix.PushMatrix();
+                    modelViewMatix.MultMatrix(spheres[i]);
+                    shaderManager.UseStockShader(GLT_SHADER_FLAT,
+                                                 transformPipeline.GetModelViewProjectionMatrix(),
+                                                 vSphereColor);
+                    sphereBatch.Draw();
+                modelViewMatix.PopMatrix();
+            }
 
             modelViewMatix.Translate(0.0f,0.0f,-2.5f);
 
